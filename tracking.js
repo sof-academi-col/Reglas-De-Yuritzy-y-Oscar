@@ -56,8 +56,8 @@ const rulesYuritzy = [
 
 let rules = rulesOscar;
 
-const SUPABASE_URL = 'https://mskwsfqwmmchnwnddssc.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1za3dzZnF3bW1jaG53bmRkc3NjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3OTcyMjMsImV4cCI6MjA3NjM3MzIyM30.oHZeqqixFXVZG076tu72JrCc-GSaPIJ07BXBj7NfqiA';
+const SUPABASE_URL = 'https://ppzafoofqwxyvqiafjko.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwemFmb29mcXd4eXZxaWFmamtvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzgyNzI4MzUsImV4cCI6MjA1Mzg0ODgzNX0.TXUgP5q3LBIUgA4q0G4SoILwO1PBQ0zD0t__zQ3d3D4';
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 

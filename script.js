@@ -53,325 +53,128 @@ const rulesYuritzy = [
     "No se puede hablar o hacer alusión a ningún ser femenino en caso de Oscar con excepción de \"La familia de Salo y mi mamá y familia\" y de ningún ser masculino en el caso de Yuritzy con excepción de \"Su papá y sus primos y familia\"."
 ];
 
-let currentViewingUser = null;
-let rules = rulesOscar; // Default to Oscar's rules
+// State
+let currentUser = null;
+let currentRules = [];
+let currentRuleIndex = 0;
 
-// Global state
-let currentRule = 0;
-let showHearts = false;
+// DOM Elements
+const userSelection = document.getElementById('user-selection');
+const mainContent = document.getElementById('main-content');
+const userButtons = document.querySelectorAll('.user-btn');
+const backBtn = document.getElementById('back-btn');
+const userNameDisplay = document.getElementById('user-name-display');
+const ruleCount = document.getElementById('rule-count');
+const currentRuleNumber = document.getElementById('current-rule-number');
+const totalRulesEl = document.getElementById('total-rules');
+const ruleText = document.getElementById('rule-text');
+const prevRuleBtn = document.getElementById('prev-rule');
+const nextRuleBtn = document.getElementById('next-rule');
+const progressFill = document.getElementById('progress-fill');
 
-// DOM elements
-const prevBtn = document.getElementById('prev-btn');
-const nextBtn = document.getElementById('next-btn');
-const ruleCounter = document.getElementById('rule-counter');
-const currentRuleText = document.getElementById('current-rule-text');
-const progressBar = document.getElementById('progress-bar');
-const rulesGrid = document.getElementById('rules-grid');
-const floatingHeartsContainer = document.getElementById('floating-hearts');
-const sparkleEffectsContainer = document.getElementById('sparkle-effects');
-
-// Initialize the app
-function init() {
-    createFloatingHearts();
-    createSparkleEffects();
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    // Check URL for user parameter
     const urlParams = new URLSearchParams(window.location.search);
     const userParam = urlParams.get('user');
-    if (userParam === 'Yuritzy') {
-        currentViewingUser = 'Yuritzy';
-        rules = rulesYuritzy;
-    } else if (userParam === 'Oscar') {
-        currentViewingUser = 'Oscar';
-        rules = rulesOscar;
-    } else {
-        // Default to Oscar if no parameter
-        currentViewingUser = 'Oscar';
-        rules = rulesOscar;
+    
+    if (userParam === 'Oscar' || userParam === 'Yuritzy') {
+        selectUser(userParam);
     }
     
-    generateRulesGrid();
-    updateDisplay();
     setupEventListeners();
-    startHeartAnimation();
-}
+});
 
-// Create floating hearts
-function createFloatingHearts() {
-    for (let i = 0; i < 25; i++) {
-        const heart = document.createElement('div');
-        heart.className = 'floating-heart';
-        const hearts = ['💕', '💖', '💝', '💗', '💓', '💘', '💞', '💟'];
-        heart.textContent = hearts[Math.floor(Math.random() * hearts.length)];
-        heart.style.left = Math.random() * 100 + '%';
-        heart.style.top = Math.random() * 100 + '%';
-        heart.style.animationDelay = (i * 150) + 'ms';
-        heart.style.opacity = '0';
-        floatingHeartsContainer.appendChild(heart);
-    }
-}
-
-// Create sparkle effects
-function createSparkleEffects() {
-    for (let i = 0; i < 20; i++) {
-        const sparkle = document.createElement('div');
-        sparkle.className = 'sparkle';
-        const sparkles = ['✨', '⭐', '🌟', '💫', '⚡'];
-        sparkle.textContent = sparkles[Math.floor(Math.random() * sparkles.length)];
-        sparkle.style.left = Math.random() * 100 + '%';
-        sparkle.style.top = Math.random() * 100 + '%';
-        sparkle.style.animationDelay = (i * 200) + 'ms';
-        sparkleEffectsContainer.appendChild(sparkle);
-    }
-}
-
-// Generate rules grid
-function generateRulesGrid() {
-    rulesGrid.innerHTML = '';
-    rules.forEach((rule, index) => {
-        const ruleItem = document.createElement('button');
-        ruleItem.className = 'rule-item';
-        ruleItem.innerHTML = `
-            <div class="rule-item-header">
-                <span>💖</span>
-                <span class="rule-item-title">Regla ${index + 1}</span>
-            </div>
-            <p class="rule-item-preview">${rule.substring(0, 80)}...</p>
-        `;
-        ruleItem.addEventListener('click', () => {
-            currentRule = index;
-            updateDisplay();
-        });
-        rulesGrid.appendChild(ruleItem);
-    });
-}
-
-// Update display
-function updateDisplay() {
-    // Update rule counter
-    ruleCounter.textContent = `Regla ${currentRule + 1} de ${rules.length}`;
-    
-    // Update current rule text
-    currentRuleText.textContent = rules[currentRule];
-    
-    // Update progress bar
-    const progress = ((currentRule + 1) / rules.length) * 100;
-    progressBar.style.width = progress + '%';
-    
-    // Update navigation buttons
-    prevBtn.disabled = currentRule === 0;
-    nextBtn.disabled = currentRule === rules.length - 1;
-    
-    // Update rules grid
-    const ruleItems = rulesGrid.querySelectorAll('.rule-item');
-    ruleItems.forEach((item, index) => {
-        if (index === currentRule) {
-            item.classList.add('active');
-        } else {
-            item.classList.remove('active');
-        }
-    });
-}
-
-// Setup event listeners
 function setupEventListeners() {
-    prevBtn.addEventListener('click', () => {
-        if (currentRule > 0) {
-            currentRule--;
-            updateDisplay();
+    // User selection buttons
+    userButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const user = btn.getAttribute('data-user');
+            selectUser(user);
+        });
+    });
+    
+    // Back button
+    backBtn.addEventListener('click', () => {
+        showUserSelection();
+    });
+    
+    // Navigation buttons
+    prevRuleBtn.addEventListener('click', () => {
+        if (currentRuleIndex > 0) {
+            currentRuleIndex--;
+            updateRuleDisplay();
         }
     });
     
-    nextBtn.addEventListener('click', () => {
-        if (currentRule < rules.length - 1) {
-            currentRule++;
-            updateDisplay();
+    nextRuleBtn.addEventListener('click', () => {
+        if (currentRuleIndex < currentRules.length - 1) {
+            currentRuleIndex++;
+            updateRuleDisplay();
         }
     });
     
     // Keyboard navigation
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowLeft' && currentRule > 0) {
-            currentRule--;
-            updateDisplay();
-        } else if (e.key === 'ArrowRight' && currentRule < rules.length - 1) {
-            currentRule++;
-            updateDisplay();
+        if (mainContent.style.display === 'none') return;
+        
+        if (e.key === 'ArrowLeft' && currentRuleIndex > 0) {
+            currentRuleIndex--;
+            updateRuleDisplay();
+        } else if (e.key === 'ArrowRight' && currentRuleIndex < currentRules.length - 1) {
+            currentRuleIndex++;
+            updateRuleDisplay();
         }
     });
 }
 
-// Start heart animation
-function startHeartAnimation() {
-    setInterval(() => {
-        showHearts = !showHearts;
-        const hearts = document.querySelectorAll('.floating-heart');
-        hearts.forEach(heart => {
-            heart.style.opacity = showHearts ? '1' : '0';
-        });
-    }, 3000);
+function selectUser(user) {
+    currentUser = user;
+    currentRules = user === 'Oscar' ? rulesOscar : rulesYuritzy;
+    currentRuleIndex = 0;
     
-    // Add random heart bursts
-    setInterval(() => {
-        createHeartBurst();
-    }, 8000);
+    // Update URL
+    const url = new URL(window.location);
+    url.searchParams.set('user', user);
+    window.history.pushState({}, '', url);
+    
+    showMainContent();
 }
 
-// Create heart burst effect
-function createHeartBurst() {
-    const burstContainer = document.createElement('div');
-    burstContainer.style.position = 'absolute';
-    burstContainer.style.left = Math.random() * 100 + '%';
-    burstContainer.style.top = Math.random() * 100 + '%';
-    burstContainer.style.pointerEvents = 'none';
-    burstContainer.style.zIndex = '5';
+function showUserSelection() {
+    userSelection.style.display = 'flex';
+    mainContent.style.display = 'none';
     
-    for (let i = 0; i < 8; i++) {
-        const heart = document.createElement('div');
-        heart.textContent = '💕';
-        heart.style.position = 'absolute';
-        heart.style.fontSize = '1.5rem';
-        heart.style.color = '#ff1493';
-        heart.style.animation = `heartBurst 2s ease-out forwards`;
-        heart.style.animationDelay = (i * 100) + 'ms';
-        
-        const angle = (i / 8) * 360;
-        heart.style.transform = `rotate(${angle}deg)`;
-        
-        burstContainer.appendChild(heart);
-    }
-    
-    document.body.appendChild(burstContainer);
-    
-    setTimeout(() => {
-        document.body.removeChild(burstContainer);
-    }, 2500);
+    // Clear URL parameter
+    const url = new URL(window.location);
+    url.searchParams.delete('user');
+    window.history.pushState({}, '', url);
 }
 
-document.addEventListener('DOMContentLoaded', init);
-
-document.addEventListener('DOMContentLoaded', () => {
-    const goldenRule = document.querySelector('.golden-rule');
-    if (goldenRule) {
-        goldenRule.addEventListener('click', () => {
-            goldenRule.classList.add('celebrating');
-            createConfettiExplosion();
-            createHeartExplosion();
-            playMagicalSound();
-
-            setTimeout(() => {
-                goldenRule.classList.remove('celebrating');
-            }, 2000);
-        });
-    }
-});
-
-function createConfettiExplosion() {
-    const colors = ['#ff1493', '#ffd700', '#ff69b4', '#8b008b', '#fbbf24', '#ffffff'];
-
-    for (let i = 0; i < 100; i++) {
-        setTimeout(() => {
-            const confetti = document.createElement('div');
-            confetti.style.position = 'fixed';
-            confetti.style.left = '50%';
-            confetti.style.top = '50%';
-            confetti.style.width = '10px';
-            confetti.style.height = '10px';
-            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-            confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
-            confetti.style.pointerEvents = 'none';
-            confetti.style.zIndex = '9999';
-            confetti.style.boxShadow = `0 0 10px ${colors[Math.floor(Math.random() * colors.length)]}`;
-
-            const angle = (Math.random() * 360) * (Math.PI / 180);
-            const velocity = 200 + Math.random() * 300;
-            const vx = Math.cos(angle) * velocity;
-            const vy = Math.sin(angle) * velocity;
-
-            confetti.animate([
-                {
-                    transform: 'translate(-50%, -50%) scale(1) rotate(0deg)',
-                    opacity: 1
-                },
-                {
-                    transform: `translate(calc(-50% + ${vx}px), calc(-50% + ${vy}px)) scale(0.5) rotate(${Math.random() * 720}deg)`,
-                    opacity: 0
-                }
-            ], {
-                duration: 1500 + Math.random() * 1000,
-                easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-            });
-
-            document.body.appendChild(confetti);
-
-            setTimeout(() => {
-                confetti.remove();
-            }, 2500);
-        }, i * 3);
-    }
+function showMainContent() {
+    userSelection.style.display = 'none';
+    mainContent.style.display = 'flex';
+    
+    // Update header
+    userNameDisplay.textContent = currentUser;
+    ruleCount.textContent = `${currentRules.length} Reglas`;
+    totalRulesEl.textContent = currentRules.length;
+    
+    updateRuleDisplay();
 }
 
-function createHeartExplosion() {
-    const heartEmojis = ['💕', '💖', '💝', '💗', '💓', '💘', '💞', '💟', '❤️', '🧡', '💛', '💚', '💙', '💜'];
-
-    for (let i = 0; i < 30; i++) {
-        setTimeout(() => {
-            const heart = document.createElement('div');
-            heart.style.position = 'fixed';
-            heart.style.left = '50%';
-            heart.style.top = '50%';
-            heart.style.fontSize = (20 + Math.random() * 30) + 'px';
-            heart.textContent = heartEmojis[Math.floor(Math.random() * heartEmojis.length)];
-            heart.style.pointerEvents = 'none';
-            heart.style.zIndex = '9999';
-            heart.style.filter = 'drop-shadow(0 0 10px #ff1493)';
-
-            const angle = (Math.random() * 360) * (Math.PI / 180);
-            const velocity = 150 + Math.random() * 250;
-            const vx = Math.cos(angle) * velocity;
-            const vy = Math.sin(angle) * velocity;
-
-            heart.animate([
-                {
-                    transform: 'translate(-50%, -50%) scale(0.5) rotate(0deg)',
-                    opacity: 1
-                },
-                {
-                    transform: `translate(calc(-50% + ${vx}px), calc(-50% + ${vy}px)) scale(1.5) rotate(${Math.random() * 360}deg)`,
-                    opacity: 0
-                }
-            ], {
-                duration: 2000 + Math.random() * 1000,
-                easing: 'ease-out'
-            });
-
-            document.body.appendChild(heart);
-
-            setTimeout(() => {
-                heart.remove();
-            }, 3000);
-        }, i * 15);
-    }
-}
-
-function playMagicalSound() {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const notes = [523.25, 659.25, 783.99, 1046.50];
-
-    notes.forEach((frequency, index) => {
-        setTimeout(() => {
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-
-            oscillator.frequency.value = frequency;
-            oscillator.type = 'sine';
-
-            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.5);
-        }, index * 150);
-    });
+function updateRuleDisplay() {
+    // Update rule number
+    currentRuleNumber.textContent = currentRuleIndex + 1;
+    
+    // Update rule text
+    ruleText.textContent = currentRules[currentRuleIndex];
+    
+    // Update progress bar
+    const progress = ((currentRuleIndex + 1) / currentRules.length) * 100;
+    progressFill.style.width = `${progress}%`;
+    
+    // Update navigation buttons
+    prevRuleBtn.disabled = currentRuleIndex === 0;
+    nextRuleBtn.disabled = currentRuleIndex === currentRules.length - 1;
 }

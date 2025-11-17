@@ -8,106 +8,100 @@
 </head>
 <body>
     <div id="app">
-        <!-- Floating Hearts -->
-        <div id="floating-hearts"></div>
-        
-        <!-- Sparkle Effects -->
-        <div id="sparkle-effects"></div>
-
-        <!-- User selector added -->
-        <div class="user-selector">
-            <button class="user-selector-btn" data-user="Oscar">Oscar 👑</button>
-            <button class="user-selector-btn" data-user="Yuritzy">Yuritzy 👸</button>
-        </div>
-
-        <!-- Header -->
-        <div class="header">
-            <div class="title-container">
-                <span class="crown">👑</span>
-                <h1 class="main-title">💕 Reglas del Amor Eterno 💕</h1>
-                <span class="crown">👑</span>
-            </div>
-            
-            <div class="couple-container">
-                <div class="person">
-                    <div class="avatar">
-                        <img src="public/Imagen de WhatsApp 2025-09-06 a las 00.43.59_37264b21.jpg" alt="Oscar" class="avatar-img">
-                    </div>
-                    <h2 class="person-name">Oscar</h2>
-                </div>
-                
-                <div class="heart-center">
-                    <div class="heart-icon">❤️</div>
-                    <div class="love-text">💕 Amor Infinito 💕</div>
-                </div>
-                
-                <div class="person">
-                    <div class="avatar avatar-delayed">
-                        <img src="public/Imagen de WhatsApp 2025-09-06 a las 14.10.18_f47c6f3b.jpg" alt="Yuritzy" class="avatar-img">
-                    </div>
-                    <h2 class="person-name">Yuritzy</h2>
+        <!-- Added selection screen for user to choose their name -->
+        <!-- User Selection Screen -->
+        <div id="user-selection" class="user-selection">
+            <div class="selection-content">
+                <h1 class="selection-title">Selecciona tu nombre</h1>
+                <div class="user-buttons">
+                    <button class="user-btn" data-user="Oscar">
+                        <div class="user-avatar">
+                            <img src="public/Imagen de WhatsApp 2025-09-06 a las 00.43.59_37264b21.jpg" alt="Oscar">
+                        </div>
+                        <span class="user-name">Oscar</span>
+                    </button>
+                    <button class="user-btn" data-user="Yuritzy">
+                        <div class="user-avatar">
+                            <img src="public/Imagen de WhatsApp 2025-09-06 a las 14.10.18_f47c6f3b.jpg" alt="Yuritzy">
+                        </div>
+                        <span class="user-name">Yuritzy</span>
+                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- Rules Container -->
-        <div class="rules-container">
-            <div class="rules-card">
-                <!-- Rule Navigation -->
-                <div class="rule-navigation">
-                    <button id="prev-btn" class="nav-btn">← Anterior</button>
-                    <div id="rule-counter" class="rule-counter">Regla 1 de 29</div>
-                    <button id="next-btn" class="nav-btn">Siguiente →</button>
+        <!-- Main Content (hidden initially) -->
+        <div id="main-content" class="main-content" style="display: none;">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-content">
+                    <button id="back-btn" class="back-btn">← Volver</button>
+                    <h1 class="header-title">
+                        <span class="heart-icon">💕</span>
+                        <span id="user-name-display">Oscar</span>
+                        <span class="heart-icon">💕</span>
+                    </h1>
+                    <div class="header-subtitle">
+                        <span id="rule-count">29 Reglas</span>
+                    </div>
                 </div>
+            </header>
 
-                <!-- Current Rule Display -->
-                <div class="current-rule">
+            <!-- Rules Viewer -->
+            <main class="rules-viewer">
+                <div class="rule-card">
+                    <div class="rule-number">
+                        <span id="current-rule-number">1</span>
+                        <span class="rule-total">/ <span id="total-rules">29</span></span>
+                    </div>
+                    
                     <div class="rule-content">
-                        <span class="shield-icon">💖</span>
-                        <p id="current-rule-text" class="rule-text">
+                        <div class="rule-icon">💖</div>
+                        <p id="rule-text" class="rule-text">
                             No me gusta que tengas más amigos aparte de los que ya algo he sabido. No más amigos ni amiguitos.
                         </p>
                     </div>
+
+                    <div class="rule-navigation">
+                        <button id="prev-rule" class="nav-btn nav-prev">
+                            <span>←</span>
+                            <span class="nav-text">Anterior</span>
+                        </button>
+                        <button id="next-rule" class="nav-btn nav-next">
+                            <span class="nav-text">Siguiente</span>
+                            <span>→</span>
+                        </button>
+                    </div>
+
+                    <div class="progress-bar">
+                        <div id="progress-fill" class="progress-fill"></div>
+                    </div>
                 </div>
 
-                <!-- Progress Bar -->
-                <div class="progress-container">
-                    <div id="progress-bar" class="progress-bar"></div>
+                <!-- Golden Rule -->
+                <div class="golden-rule">
+                    <div class="golden-icon">✨</div>
+                    <h3 class="golden-title">Regla de Oro</h3>
+                    <p class="golden-text">Amarnos por siempre 💗</p>
+                    <div class="golden-hearts">
+                        <span>💕</span>
+                        <span>💖</span>
+                        <span>💝</span>
+                    </div>
                 </div>
 
-                <!-- Rules Grid -->
-                <div id="rules-grid" class="rules-grid">
-                    <!-- Rules will be generated by JavaScript -->
+                <!-- Control Link -->
+                <div class="control-section">
+                    <a href="tracking.html" class="control-btn">
+                        <span class="control-icon">📊</span>
+                        <span>Control de Cumplimiento</span>
+                    </a>
                 </div>
-            </div>
-
-            <!-- Golden Rule -->
-            <div class="golden-rule">
-                <div class="golden-header">
-                    <span class="sparkle">✨</span>
-                    <h3 class="golden-title">🌟 Regla de Oro (#30)</h3>
-                    <span class="sparkle">✨</span>
-                </div>
-                <p class="golden-text">Amarnos por siempre 💗🤍</p>
-                <div class="golden-hearts">
-                    <span class="heart-bounce">💕</span>
-                    <span class="heart-bounce heart-delay-1">💖</span>
-                    <span class="heart-bounce heart-delay-2">💝</span>
-                    <span class="heart-bounce heart-delay-3">💗</span>
-                    <span class="heart-bounce heart-delay-4">💓</span>
-                </div>
-            </div>
-
-            <!-- Control Link -->
-            <div class="control-link-container">
-                <a href="tracking.html" class="control-link">
-                    <span class="control-icon">📊</span>
-                    <span class="control-text">Control de Cumplimiento</span>
-                </a>
-            </div>
+            </main>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
-</invoke>
+</body>
+</html>
