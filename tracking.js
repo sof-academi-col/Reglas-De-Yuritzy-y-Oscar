@@ -59,7 +59,12 @@ let rules = rulesOscar;
 const SUPABASE_URL = 'https://ppzafoofqwxyvqiafjko.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwemFmb29mcXd4eXZxaWFmamtvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzgyNzI4MzUsImV4cCI6MjA1Mzg0ODgzNX0.TXUgP5q3LBIUgA4q0G4SoILwO1PBQ0zD0t__zQ3d3D4';
 
+console.log('[v0] Initializing Supabase client...');
+console.log('[v0] Supabase URL:', SUPABASE_URL);
+
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+console.log('[v0] Supabase client created successfully');
 
 let currentUser = null;
 let currentDate = new Date();
@@ -155,6 +160,8 @@ async function initCheckingMode() {
 
 async function loadExistingChecks() {
     const dateStr = formatDateISO(currentDate);
+    
+    console.log('[v0] Loading existing checks for:', currentUser, dateStr);
 
     const { data, error } = await supabase
         .from('rule_checks')
@@ -163,9 +170,12 @@ async function loadExistingChecks() {
         .eq('check_date', dateStr);
 
     if (error) {
-        console.error('Error loading checks:', error);
+        console.error('[v0] Error loading checks:', error);
+        alert('Error al cargar los datos. Por favor verifica que las tablas estén creadas.');
         return;
     }
+
+    console.log('[v0] Loaded checks:', data);
 
     if (data) {
         data.forEach(check => {
@@ -253,44 +263,51 @@ async function saveProgress() {
     btn.textContent = '💾 Guardando...';
     btn.disabled = true;
 
+    console.log('[v0] Saving progress for:', currentUser, dateStr);
+    console.log('[v0] Rule checks:', Array.from(ruleChecks.entries()));
+
     try {
-        const deletePromises = [];
-        for (let i = 1; i <= rules.length; i++) {
-            if (!ruleChecks.has(i)) {
-                deletePromises.push(
-                    supabase
-                        .from('rule_checks')
-                        .delete()
-                        .eq('user_name', currentUser)
-                        .eq('check_date', dateStr)
-                        .eq('rule_number', i)
-                );
+        const { error: deleteError } = await supabase
+            .from('rule_checks')
+            .delete()
+            .eq('user_name', currentUser)
+            .eq('check_date', dateStr);
+
+        if (deleteError) {
+            console.error('[v0] Error deleting old checks:', deleteError);
+            throw deleteError;
+        }
+        console.log('[v0] Deleted all previous checks for this date');
+
+        if (ruleChecks.size > 0) {
+            const checksToInsert = Array.from(ruleChecks.entries()).map(([ruleNumber, isCompleted]) => ({
+                user_name: currentUser,
+                rule_number: ruleNumber,
+                is_completed: isCompleted,
+                check_date: dateStr
+            }));
+
+            console.log('[v0] Inserting checks:', checksToInsert);
+
+            const { error: insertError } = await supabase
+                .from('rule_checks')
+                .insert(checksToInsert);
+
+            if (insertError) {
+                console.error('[v0] Error inserting checks:', insertError);
+                throw insertError;
             }
         }
-        await Promise.all(deletePromises);
 
-        for (const [ruleNumber, isCompleted] of ruleChecks.entries()) {
-            const { error } = await supabase
-                .from('rule_checks')
-                .upsert({
-                    user_name: currentUser,
-                    rule_number: ruleNumber,
-                    is_completed: isCompleted,
-                    check_date: dateStr
-                }, {
-                    onConflict: 'user_name,check_date,rule_number'
-                });
-
-            if (error) throw error;
-        }
-
+        console.log('[v0] Progress saved successfully');
         btn.textContent = '✅ Guardado';
         setTimeout(() => {
             btn.textContent = originalText;
             btn.disabled = false;
         }, 2000);
     } catch (error) {
-        console.error('Error saving progress:', error);
+        console.error('[v0] Error saving progress:', error);
+        alert(`Error al guardar: ${error.message}`);
         btn.textContent = '❌ Error';
         setTimeout(() => {
             btn.textContent = originalText;
@@ -306,50 +323,73 @@ async function completeSession() {
     btn.textContent = '✨ Completando...';
     btn.disabled = true;
 
+    console.log('[v0] Completing session for:', currentUser, dateStr);
+
     try {
-        const deletePromises = [];
-        for (let i = 1; i <= rules.length; i++) {
-            if (!ruleChecks.has(i)) {
-                deletePromises.push(
-                    supabase
-                        .from('rule_checks')
-                        .delete()
-                        .eq('user_name', currentUser)
-                        .eq('check_date', dateStr)
-                        .eq('rule_number', i)
-                );
-            }
+        const { error: deleteError } = await supabase
+            .from('rule_checks')
+            .delete()
+            .eq('user_name', currentUser)
+            .eq('check_date', dateStr);
+
+        if (deleteError) {
+            console.error('[v0] Error deleting old checks:', deleteError);
+            throw deleteError;
         }
-        await Promise.all(deletePromises);
+        console.log('[v0] Deleted all previous checks for this date');
 
-        for (const [ruleNumber, isCompleted] of ruleChecks.entries()) {
-            const { error: checkError } = await supabase
-                .from('rule_checks')
-                .upsert({
-                    user_name: currentUser,
-                    rule_number: ruleNumber,
-                    is_completed: isCompleted,
-                    check_date: dateStr
-                }, {
-                    onConflict: 'user_name,check_date,rule_number'
-                });
+        const checksToInsert = Array.from(ruleChecks.entries()).map(([ruleNumber, isCompleted]) => ({
+            user_name: currentUser,
+            rule_number: ruleNumber,
+            is_completed: isCompleted,
+            check_date: dateStr
+        }));
 
-            if (checkError) throw checkError;
+        console.log('[v0] Inserting checks:', checksToInsert);
+
+        const { error: insertError } = await supabase
+            .from('rule_checks')
+            .insert(checksToInsert);
+
+        if (insertError) {
+            console.error('[v0] Error inserting checks:', insertError);
+            throw insertError;
         }
 
-        const { error: sessionError } = await supabase
+        console.log('[v0] Marking session as completed');
+        const { data: sessionData, error: sessionError } = await supabase
             .from('daily_sessions')
-            .upsert({
+            .insert({
                 user_name: currentUser,
                 session_date: dateStr,
                 is_completed: true,
                 completed_at: new Date().toISOString()
-            }, {
-                onConflict: 'user_name,session_date'
-            });
+            })
+            .select()
+            .single();
 
-        if (sessionError) throw sessionError;
+        // If there's a conflict, update instead
+        if (sessionError && sessionError.code === '23505') {
+            const { error: updateError } = await supabase
+                .from('daily_sessions')
+                .update({
+                    is_completed: true,
+                    completed_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                })
+                .eq('user_name', currentUser)
+                .eq('session_date', dateStr);
 
+            if (updateError) {
+                console.error('[v0] Error updating session:', updateError);
+                throw updateError;
+            }
+        } else if (sessionError) {
+            console.error('[v0] Error creating session:', sessionError);
+            throw sessionError;
+        }
+
+        console.log('[v0] Session completed successfully');
         btn.textContent = '✅ Completado';
         setTimeout(() => {
             showScreen('modeSelection');
@@ -357,7 +397,8 @@ async function completeSession() {
             btn.disabled = false;
         }, 2000);
     } catch (error) {
-        console.error('Error completing session:', error);
+        console.error('[v0] Error completing session:', error);
+        alert(`Error al completar sesión: ${error.message}`);
         btn.textContent = '❌ Error';
         setTimeout(() => {
             btn.textContent = originalText;
@@ -378,6 +419,8 @@ async function loadAndDisplayResults(targetUser) {
     const dateStr = formatDateISO(currentDate);
     document.getElementById('selected-date').textContent = formatDate(currentDate);
 
+    console.log('[v0] Loading results for:', targetUser, dateStr);
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const selectedDate = new Date(currentDate);
@@ -393,10 +436,12 @@ async function loadAndDisplayResults(targetUser) {
         .maybeSingle();
 
     if (sessionError) {
-        console.error('Error loading session:', sessionError);
+        console.error('[v0] Error loading session:', sessionError);
         showResultsStatus('error', 'Error al cargar los datos');
         return;
     }
+
+    console.log('[v0] Session data:', sessionData);
 
     if (!sessionData || !sessionData.is_completed) {
         showResultsStatus('not-found', `${targetUser} aún no ha completado el registro para esta fecha`);
@@ -412,10 +457,12 @@ async function loadAndDisplayResults(targetUser) {
         .order('rule_number');
 
     if (checksError) {
-        console.error('Error loading checks:', checksError);
+        console.error('[v0] Error loading checks:', checksError);
         showResultsStatus('error', 'Error al cargar los resultados');
         return;
     }
+
+    console.log('[v0] Checks data:', checksData);
 
     const completedCount = checksData.filter(c => c.is_completed).length;
     showResultsStatus('completed', `✅ Sesión completada - ${completedCount}/${rules.length} reglas cumplidas`);
